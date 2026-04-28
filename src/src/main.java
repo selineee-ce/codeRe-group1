@@ -60,6 +60,17 @@ class Ship{
 		return hits;
 	}
 	
+	// FIX: Method untuk encapsulasi logic hit (Feature Envy & Message Chains)
+	int checkHit(Point p){
+		for(int i = 0; i < dead.size(); i++){
+			if(dead.get(i).x == p.x && dead.get(i).y == p.y) return 2;
+		}
+		for(int i = 0; i < live.size(); i++){
+			if(live.get(i).x == p.x && live.get(i).y == p.y) return 1;
+		}
+		return 0;
+	}
+	
 	void shotFiredAtPoint(Point p){
 		if(isHitAtPoint(p)){
 			dead.add(new Point(p.x, p.y));
@@ -83,6 +94,22 @@ class Ship{
 		return hit;
 	}
 	
+	// FIX: Method getter untuk menghindari akses langsung (Inappropriate Intimacy)
+	boolean isDeadAtPoint(Point p){
+		for(int i = 0; i < dead.size(); i++){
+			if(dead.get(i).x == p.x && dead.get(i).y == p.y) return true;
+		}
+		return false;
+	}
+	
+	// FIX: Method getter untuk menghindari akses langsung (Inappropriate Intimacy)
+	boolean isLiveAtPoint(Point p){
+		for(int i = 0; i < live.size(); i++){
+			if(live.get(i).x == p.x && live.get(i).y == p.y) return true;
+		}
+		return false;
+	}
+	
 	int hitCount(){
 		return dead.size();
 	}
@@ -95,6 +122,7 @@ class Board{
 	ArrayList<Ship> userShips = new ArrayList<Ship>();
 	ArrayList<Ship> enemyShips = new ArrayList<Ship>();
 	
+	// FIX: Refactored - menghilangkan message chains dan feature envy
 	boolean shootAtEnemy(Point p){
 		boolean hitLive = false;
 		boolean hitDead= false;
@@ -103,27 +131,23 @@ class Board{
 		char x = 'x';
 		for(int i = 0; i < enemyShips.size(); i++){
 			
-			for(int j = 0; j < enemyShips.get(i).dead.size(); j++){
-				if(enemyShips.get(i).dead.get(j).x == p.x && enemyShips.get(i).dead.get(j).y == p.y){
-					hitDead = true;
-					x = 'D';
-				}
+			// FIX: Menggunakan method checkHit
+			int hitResult = enemyShips.get(i).checkHit(p);
+			
+			if(hitResult == 2){
+				hitDead = true;
+				x = 'D';
 			}
 			
-			// TROUBLE IN HERE
-			if(!hitDead){
-				for(int j = 0; j < enemyShips.get(i).live.size(); j++){
-					if(enemyShips.get(i).live.get(j).x == p.x && enemyShips.get(i).live.get(j).y == p.y){
-						if(enemyShips.get(i).live.size() == 1){
-							shipIndex = i;
-						}
-						hitLive = true;
-						x = 'L';
-						enemyShips.get(i).shotFiredAtPoint(p);
-					}
+			if(!hitDead && hitResult == 1){
+				if(enemyShips.get(i).live.size() == 1){
+					shipIndex = i;
 				}
+				hitLive = true;
+				x = 'L';
+				enemyShips.get(i).shotFiredAtPoint(p);
 			}
-			if(!hitDead && !hitLive){
+			if(!hitDead && !hitLive && hitResult == 0){
 				miss = true;
 			}
 			
@@ -173,6 +197,7 @@ class Board{
 	}
 	
 	
+	// FIX: Menggunakan method getter isDeadAtPoint dan isLiveAtPoint
 	void printBoard(){
 		for(int i = side - 1; i >= 0; i--){
 			System.out.print(i +" ");
@@ -189,11 +214,10 @@ class Board{
 				*/
 				if(!special){
 					for(int k = 0; k < enemyShips.size(); k++){
-						for(int l = 0; l < enemyShips.get(k).dead.size(); l++){
-							if(enemyShips.get(k).dead.get(l).x == j && enemyShips.get(k).dead.get(l).y == i){
-								System.out.print("X ");
-								special = true;
-							}
+						// FIX: menggunakan isDeadAtPoint
+						if(enemyShips.get(k).isDeadAtPoint(new Point(j,i))){
+							System.out.print("X ");
+							special = true;
 						}
 					}
 				}
@@ -207,11 +231,10 @@ class Board{
 				}	
 				if(!special){
 					for(int k = 0; k < enemyShips.size(); k++){
-						for(int l = 0; l < enemyShips.get(k).live.size(); l++){
-							if(enemyShips.get(k).live.get(l).x == j && enemyShips.get(k).live.get(l).y == i){
-								System.out.print("~ ");
-								special = true;
-							}
+						// FIX: menggunakan isLiveAtPoint
+						if(enemyShips.get(k).isLiveAtPoint(new Point(j,i))){
+							System.out.print("~ ");
+							special = true;
 						}
 					}
 				}
