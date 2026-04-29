@@ -1,141 +1,81 @@
 package aol_codere;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
-public class Board{
+public class Board {
 	int side;
-	ArrayList<Point> misses = new ArrayList<Point>();
-	ArrayList<Ship> enemyShips = new ArrayList<Ship>();
-	
-	Board(int side){
+	Set<Point> misses = new HashSet<>();
+	ArrayList<Ship> enemyShips = new ArrayList<>();
+
+	private final BoardRenderer renderer;
+	private final ShotResolver resolver;
+
+	Board(int side) {
 		this.side = side;
+		this.renderer = new BoardRenderer(this);
+		this.resolver = new ShotResolver(enemyShips);
 	}
-	
-	boolean shootAtEnemy(Point p){
-		boolean hit = false;
-		boolean dead = false;
-		int shipIndex = -1;
 
-		for(int i = 0; i < enemyShips.size(); i++){
+	boolean shootAtEnemy(Point p) {
+		ShotOutcome outcome = resolver.resolveShot(p);
 
-			HitResult result = enemyShips.get(i).checkHit(p);
-
-			if(result == HitResult.HIT){
-				hit = true;
-				enemyShips.get(i).shotFiredAtPoint(p);
-			}
-
-			if(result == HitResult.DEAD){
-				dead = true;
-			}
-
-			if(result == HitResult.HIT && enemyShips.get(i).live.size() == 1){
-				shipIndex = i;
-			}
+		if (outcome == ShotOutcome.MISS) {
+			misses.add(p);
 		}
 
-		if(hit){
-			printBoard();
+		renderer.printBoard();
+
+		if (outcome == ShotOutcome.HIT || outcome == ShotOutcome.SUNK) {
 			System.out.println("Hit! @ (" + p.x + "," + p.y + ").");
-		}
-
-		if(dead){
-			printBoard();
+		} else {
 			System.out.println("(" + p.x + "," + p.y + ") was a miss.");
 		}
 
-		if(!hit && !dead){
-			handleMiss(p);
-			printBoard();
-			System.out.println("(" + p.x + "," + p.y + ") was a miss.");
-		}
-
-		if(shipIndex > -1){
-			System.out.println("Ship of length " +
-				enemyShips.get(shipIndex).length + " has been sunk!");
+		if (outcome == ShotOutcome.SUNK) {
+			System.out.println("Ship of length " + resolver.getLastSunkLength() + " has been sunk!");
 		}
 
 		return true;
 	}
-	
+
 	void printBoard() {
-		for (int i = side - 1; i >= 0; i--) {
-			System.out.print(i + " ");
-
-			for (int j = 0; j < side; j++) {
-				System.out.print(getCell(new Point(j, i)));
-			}
-
-			System.out.println();
-		}
-
-		System.out.print("  ");
-		for (int i = 0; i < side; i++) {
-			System.out.print(i + " ");
-		}
-		System.out.println();
-	}
-
-	String getCell(Point p) {
-		for (Ship s : enemyShips) {
-			if (s.isDeadAtPoint(p)) return "X ";
-			if (s.isLiveAtPoint(p)) return "~ ";
-		}
-
-		if (isMiss(p)) return ". ";
-		return "~ ";
-	}
-
-	boolean addShip(Point start, boolean vertical, int length){
-		Ship newShip = new Ship (start, vertical, length);
-		
-		for (Ship s : enemyShips) {
-            if (newShip.collidesWith(s)) return true;
-        }
-        enemyShips.add(newShip);
-        return false;
-	}
-	
-	void addEnemy(int length){
-		Random rand = new Random();
-		boolean bump = true;
-		
-		while (bump) {
-			boolean vertical = rand.nextBoolean();
-			int x = rand.nextInt(side - (vertical ? length : 0));
-            int y = rand.nextInt(side - (!vertical ? length : 0));
-            bump = addShip(new Point(x, y), vertical, length);
-		}
-	}
-	
-	int liveEnemies(){
-		int tiles = 0;
-			for(int i = 0; i < enemyShips.size(); i++){
-				tiles = tiles + enemyShips.get(i).live.size();
-			}
-		return tiles;
+		renderer.printBoard();
 	}
 
 	boolean isMiss(Point p) {
-		for (Point m : misses) {
-			if (m.x == p.x && m.y == p.y) return true;
+		return misses.contains(p);
+	}
+
+	boolean addShip(Point start, boolean vertical, int length) {
+		Ship newShip = new Ship(start, vertical ? Direction.VERTICAL : Direction.HORIZONTAL, length);
+
+		for (Ship s : enemyShips) {
+			if (newShip.collidesWith(s)) return true;
 		}
+		enemyShips.add(newShip);
 		return false;
 	}
 
-	void handleMiss(Point p) {
-		boolean exists = false;
+	void addEnemy(int length) {
+		Random rand = new Random();
+		boolean bump = true;
 
-		for (Point m : misses) {
-			if (m.x == p.x && m.y == p.y) {
-				exists = true;
-				break;
-			}
+		while (bump) {
+			boolean vertical = rand.nextBoolean();
+			int x = rand.nextInt(side - (vertical ? length : 0));
+			int y = rand.nextInt(side - (!vertical ? length : 0));
+			bump = addShip(new Point(x, y), vertical, length);
 		}
+	}
 
-		if (!exists) {
-			misses.add(new Point(p.x, p.y));
+	int liveEnemies() {
+		int tiles = 0;
+		for (int i = 0; i < enemyShips.size(); i++) {
+			tiles = tiles + enemyShips.get(i).live.size();
 		}
+		return tiles;
 	}
 }
