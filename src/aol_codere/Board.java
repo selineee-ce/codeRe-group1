@@ -13,90 +13,78 @@ public class Board{
 	}
 	
 	boolean shootAtEnemy(Point p){
-		boolean hitLive = false;
-		boolean hitDead= false;
-		boolean miss = false;
+		boolean hit = false;
+		boolean dead = false;
 		int shipIndex = -1;
-		char x = 'x';
-		
+
 		for(int i = 0; i < enemyShips.size(); i++){
-			int hitResult = enemyShips.get(i).checkHit(p);
-			
-			if(hitResult == 2){
-				hitDead = true;
-				x = 'D';
-			}
-			
-			if(!hitDead && hitResult == 1){
-				if(enemyShips.get(i).live.size() == 1){
-					shipIndex = i;
-				}
-				hitLive = true;
-				x = 'L';
+
+			HitResult result = enemyShips.get(i).checkHit(p);
+
+			if(result == HitResult.HIT){
+				hit = true;
 				enemyShips.get(i).shotFiredAtPoint(p);
 			}
-			if(!hitDead && !hitLive && hitResult == 0){
-				miss = true;
+
+			if(result == HitResult.DEAD){
+				dead = true;
+			}
+
+			if(result == HitResult.HIT && enemyShips.get(i).live.size() == 1){
+				shipIndex = i;
 			}
 		}
-		if(hitLive){
+
+		if(hit){
 			printBoard();
 			System.out.println("Hit! @ (" + p.x + "," + p.y + ").");
 		}
-		if(hitDead){
+
+		if(dead){
 			printBoard();
 			System.out.println("(" + p.x + "," + p.y + ") was a miss.");
 		}
-		if(miss){
-			boolean exists = false;
-			for(int j = 0; j < misses.size(); j++){
-				if(misses.get(j).x == p.x && misses.get(j).y == p.y){
-					x = 'p';
-					exists = true;
-				}
-			}
-			if(!exists){
-				x = 'n';
-				misses.add(new Point(p.x, p.y));
-			}
+
+		if(!hit && !dead){
+			handleMiss(p);
 			printBoard();
 			System.out.println("(" + p.x + "," + p.y + ") was a miss.");
 		}
 
 		if(shipIndex > -1){
-			System.out.println("Ship of length " + enemyShips.get(shipIndex).length + " has been sunk!");
+			System.out.println("Ship of length " +
+				enemyShips.get(shipIndex).length + " has been sunk!");
 		}
-		
-		System.out.println(p.x + " " + p.y + " " + x);
+
 		return true;
 	}
 	
-	void printBoard(){
-		for(int i = side - 1; i >= 0; i--){
-			System.out.print(i +" ");
-			for(int j = 0; j < side; j++){
-				Point p = new Point(j, i);
-				String icon = "~ ";
-				
-				for (Ship s : enemyShips) {
-                    if (s.isDeadAtPoint(p)) { icon = "X "; break; }
-                    if (s.isLiveAtPoint(p)) { icon = "~ "; break; } 
-                }
-                if (icon.equals("~ ")) {
-                    for (Point m : misses) {
-                        if (m.x == j && m.y == i) { icon = ". "; break; }
-                    }
-                }
-                System.out.print(icon);
+	void printBoard() {
+		for (int i = side - 1; i >= 0; i--) {
+			System.out.print(i + " ");
+
+			for (int j = 0; j < side; j++) {
+				System.out.print(getCell(new Point(j, i)));
 			}
+
 			System.out.println();
 		}
-		
+
 		System.out.print("  ");
-		for(int i = 0; i < side; i++){
+		for (int i = 0; i < side; i++) {
 			System.out.print(i + " ");
 		}
 		System.out.println();
+	}
+
+	String getCell(Point p) {
+		for (Ship s : enemyShips) {
+			if (s.isDeadAtPoint(p)) return "X ";
+			if (s.isLiveAtPoint(p)) return "~ ";
+		}
+
+		if (isMiss(p)) return ". ";
+		return "~ ";
 	}
 
 	boolean addShip(Point start, boolean vertical, int length){
@@ -127,5 +115,27 @@ public class Board{
 				tiles = tiles + enemyShips.get(i).live.size();
 			}
 		return tiles;
+	}
+
+	boolean isMiss(Point p) {
+		for (Point m : misses) {
+			if (m.x == p.x && m.y == p.y) return true;
+		}
+		return false;
+	}
+
+	void handleMiss(Point p) {
+		boolean exists = false;
+
+		for (Point m : misses) {
+			if (m.x == p.x && m.y == p.y) {
+				exists = true;
+				break;
+			}
+		}
+
+		if (!exists) {
+			misses.add(new Point(p.x, p.y));
+		}
 	}
 }

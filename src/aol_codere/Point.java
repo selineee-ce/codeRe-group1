@@ -9,3 +9,7 @@ public class Point{
 		y = n;
 	}	
 }
+
+boolean isSame(Point p) {
+    return x == p.x && y == p.y;
+}
