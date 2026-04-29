@@ -1,4 +1,4 @@
-
+package aol_codere;
 
 import java.util.*;
 import java.lang.String;
@@ -13,12 +13,11 @@ public class Main {
 		Board field = new Board(10);
 		
 		field.printBoard();
-	
-		field.addEnemy(5);
-		field.addEnemy(4);
-		field.addEnemy(3);
-		field.addEnemy(3);
-		field.addEnemy(2);
+
+		int[] shipSizes = {5, 4, 3, 3, 2};
+		for (int size : shipSizes) {
+			field.addEnemy(size);
+		}
 		
 		String str;
 		String[] coords;
