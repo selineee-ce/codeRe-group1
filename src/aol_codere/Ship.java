@@ -26,7 +26,7 @@ public class Ship {
 
     private boolean isPointInList(ArrayList<Point> list, Point p) {
         for (Point pt : list) {
-            if (if (pt.isSame(p))) return true;
+            if (pt.isSame(p)) return true;
         }
         return false;
     }
@@ -46,16 +46,19 @@ public class Ship {
         return false;
     }
 
-    int checkHit(Point p) {
-        if (isPointInList(dead, p)) return 2;
-        if (isPointInList(live, p)) return 1;
-        return 0;
+    HitResult checkHit(Point p) {
+        if (isPointInList(dead, p)) return HitResult.HIT;
+        if (isPointInList(live, p)) {
+            if (live.size() == 1) return HitResult.DEAD;
+            return HitResult.HIT;
+        }
+        return HitResult.MISS;
     }
 
     void shotFiredAtPoint(Point p) {
         if (isPointInList(live, p)) {
             dead.add(new Point(p.x, p.y));
-            live.removeIf(pt -> if (pt.isSame(p)));
+            live.removeIf(pt -> pt.isSame(p));
         }
     }
 
