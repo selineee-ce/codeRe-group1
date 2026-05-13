@@ -61,8 +61,10 @@ public class Board {
 
     String getCell(Point p) {
         for (Ship s : enemyShips) {
-            if (s.isDeadAtPoint(p)) return "X ";
-            if (s.isLiveAtPoint(p)) return "~ ";
+            TileState tileState = s.tileStateAt(p);
+
+            if (tileState == TileState.HIT) return "X ";
+            if (tileState == TileState.SHIP) return "~ ";
         }
 
         if (isMiss(p)) return ". ";
@@ -101,23 +103,11 @@ public class Board {
     }
 
     boolean isMiss(Point p) {
-        for (Point m : misses) {
-            if (m.x == p.x && m.y == p.y) return true;
-        }
-        return false;
+        return misses.contains(p);
     }
 
     void handleMiss(Point p) {
-        boolean exists = false;
-
-        for (Point m : misses) {
-            if (m.x == p.x && m.y == p.y) {
-                exists = true;
-                break;
-            }
-        }
-
-        if (!exists) {
+        if (!misses.contains(p)) {
             misses.add(new Point(p.x, p.y));
         }
     }

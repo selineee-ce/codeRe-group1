@@ -25,14 +25,17 @@ public class Ship {
     }
 
     private boolean isPointInList(ArrayList<Point> list, Point p) {
-        for (Point pt : list) {
-            if (pt.isSame(p)) return true;
-        }
-        return false;
+        return list.contains(p);
     }
 
     boolean containsPoint(Point p) {
-        return isPointInList(live, p) || isPointInList(dead, p);
+        return tileStateAt(p) != TileState.WATER;
+    }
+
+    TileState tileStateAt(Point p) {
+        if (isPointInList(dead, p)) return TileState.HIT;
+        if (isPointInList(live, p)) return TileState.SHIP;
+        return TileState.WATER;
     }
 
     boolean collidesWith(Ship s) {
@@ -47,8 +50,10 @@ public class Ship {
     }
 
     HitResult checkHit(Point p) {
-        if (isPointInList(dead, p)) return HitResult.HIT;
-        if (isPointInList(live, p)) {
+        TileState tileState = tileStateAt(p);
+
+        if (tileState == TileState.HIT) return HitResult.HIT;
+        if (tileState == TileState.SHIP) {
             if (live.size() == 1) return HitResult.DEAD;
             return HitResult.HIT;
         }
@@ -63,11 +68,11 @@ public class Ship {
     }
 
     boolean isDeadAtPoint(Point p) {
-        return isPointInList(dead, p);
+        return tileStateAt(p) == TileState.HIT;
     }
 
     boolean isLiveAtPoint(Point p) {
-        return isPointInList(live, p);
+        return tileStateAt(p) == TileState.SHIP;
     }
 
     int hitCount() {
